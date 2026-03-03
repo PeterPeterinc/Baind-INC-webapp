@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface StorageItem {
   id: string;
@@ -35,7 +35,7 @@ export const FilesModal = ({
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function fetchItems() {
+  const fetchItems = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -62,12 +62,12 @@ export const FilesModal = ({
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [colleagueId]);
 
   useEffect(() => {
     if (!isOpen) return;
     void fetchItems();
-  }, [colleagueId, isOpen]);
+  }, [isOpen, fetchItems]);
 
   async function handleUpload(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

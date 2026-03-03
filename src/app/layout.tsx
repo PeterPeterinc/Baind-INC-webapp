@@ -13,11 +13,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HN-AB Collega Chat",
-  description: "Praat met digitale collega's via het HN-AB platform.",
+  title: "INC Collega Chat",
+  description: "Praat met digitale collega's via het INC platform.",
   icons: {
-    icon: "/hn-ab-logo.svg",
-    apple: "/hn-ab-logo.svg",
+    icon: "/inc-logo.png",
+    apple: "/inc-logo.png",
   },
 };
 
@@ -29,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" type="image/svg+xml" href="/hn-ab-logo.svg" />
+        <link rel="icon" type="image/png" href="/inc-logo.png" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[--background] text-[--foreground]`}

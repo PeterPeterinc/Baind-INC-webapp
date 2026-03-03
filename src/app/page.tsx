@@ -223,7 +223,11 @@ export default function Home() {
     [selectedColleagueId],
   );
 
-  const sessionIdsForSelected = colleagueSessionIds[selectedColleague.id] ?? [];
+  const sessionIdsForSelected = useMemo(
+    () => colleagueSessionIds[selectedColleague.id] ?? [],
+    [selectedColleague.id, colleagueSessionIds],
+  );
+
   const sessionsForSelected = useMemo(
     () =>
       sessionIdsForSelected
@@ -669,12 +673,16 @@ export default function Home() {
   }
 
   async function handleLogout() {
-    // In UI-only mode, "uitloggen" reset alleen lokale UI-state.
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (error) {
+      console.error("Logout request failed", error);
+    }
     localStorage.removeItem("chat-sessions");
     localStorage.removeItem("chat-session-ids");
     localStorage.removeItem("active-session-id");
     localStorage.removeItem("selected-colleague-id");
-    window.location.href = "/";
+    window.location.href = "/login";
   }
 
   function handleOpenFilesModal(colleagueId: string, colleagueName: string) {
@@ -762,8 +770,8 @@ export default function Home() {
             className="flex items-center justify-center rounded-2xl border border-[#e4d8c7] bg-white px-4 py-3 text-sm font-medium text-[#1f1a12] transition hover:border-[#dabb7b] hover:bg-[#fff4db]"
           >
             <Image
-              src="/hn-ab-logo.svg"
-              alt="HN-AB logo"
+              src="/inc-logo.png"
+              alt="INC logo"
               width={120}
               height={30}
               className="h-8"
@@ -1031,8 +1039,8 @@ export default function Home() {
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-8 px-6 text-center">
               <Image
-                src="/baindlogo.svg"
-                alt="HN-AB glimlach"
+                src="/inc-logo.png"
+                alt="INC logo"
                 width={80}
                 height={80}
                 className="h-20 w-20"

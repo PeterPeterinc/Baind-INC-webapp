@@ -30,7 +30,7 @@ const colleagues = [
     id: "hnab",
     name: "HN-AB",
     title: "Algemeen",
-    avatar: "/hn-ab-logo.svg",
+    avatar: "/inc-logo.png",
     enabled: true,
   },
   {

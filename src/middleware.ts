@@ -1,23 +1,31 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { AUTH_COOKIE_NAME, isValidAuthToken } from "@/lib/auth";
 
-export function middleware(request: NextRequest) {
-  void request;
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const cookieValue = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+  const isAuthenticated = await isValidAuthToken(cookieValue);
+  const isLoginPage = pathname === "/login";
+  const isAuthApi = pathname.startsWith("/api/auth/");
+
+  if (isLoginPage && isAuthenticated) {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  if (!isAuthenticated && !isLoginPage && !isAuthApi) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Niet ingelogd." }, { status: 401 });
+    }
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
   return NextResponse.next();
 }
 
-// Configureer welke routes de middleware moet checken
 export const config = {
   matcher: [
-    /*
-     * Match alle request paths behalve:
-     * - api routes (API endpoints)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
 
