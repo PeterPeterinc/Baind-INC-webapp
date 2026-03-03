@@ -1,95 +1,142 @@
-# HN-AB Chat Platform
+# INC Collega Chat
 
-A modern AI-powered chat application for Het Nieuwe Arbeidsbureau with multi-assistant support and advanced search capabilities.
+A modern chat application for INC with password-protected access and Mistral AI integration for intelligent conversations with multiple colleagues.
 
 ## Features
 
-- **Multi-Assistant Chat**: Talk to different AI assistants (Claire, Tom, Remco, Roos, HN-AB) each with specialized knowledge
-- **Web Search Integration**: Roos can search the internet for real-time information using Brave Search API
+- **Password-Protected Access**: Secure authentication using Vercel environment variables
+- **Multiple AI Colleagues**: Chat with Dennis (Merk specialist) and Niels (Design Expert) powered by Mistral AI Agents
+- **File Management**: Upload files directly to Mistral's knowledge base for agent training
 - **Conversation History**: Maintains chat history per colleague with persistent storage
-- **Vector Store Integration**: Each assistant has access to relevant documents via OpenAI Vector Stores
-- **Cost Optimizations**: Uses GPT-4o-mini for 95% cost reduction with exponential backoff polling
-- **File Management**: Upload and manage files for each colleague
+- **Modern UI**: Clean, responsive interface built with Next.js and Tailwind CSS
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
+- **Frontend**: Next.js 16, React, TypeScript, Tailwind CSS
 - **Backend**: Next.js API Routes
-- **AI**: OpenAI Assistants API (GPT-4o-mini)
-- **Search**: Brave Search API for web search
-- **Storage**: Vercel Blob Storage + OpenAI Vector Stores
-- **Database**: Prisma with PostgreSQL
+- **AI**: Mistral AI Agents API
+- **Storage**: Mistral File Storage API
+- **Authentication**: Secure cookie-based sessions with SHA-256 hashing
 
 ## Environment Variables
 
-Required environment variables in `.env.local`:
+### Local Development
+
+Create a `.env.local` file (see `.env.example` for template):
 
 ```env
-# OpenAI Configuration
-OPENAI_API_KEY=<your_openai_key>
+# Mistral AI Configuration
+MISTRAL_API_KEY=your-mistral-api-key
+MISTRAL_AGENT_ID_DENNIS=your-dennis-agent-id
+MISTRAL_WORKSPACE_ID_DENNIS=your-dennis-workspace-id
+MISTRAL_AGENT_ID_NIELS=your-niels-agent-id
+MISTRAL_WORKSPACE_ID_NIELS=your-niels-workspace-id
 
-# Brave Search API (for web search)
-BRAVE_SEARCH_API_KEY=<your_brave_key>
+# File Upload Configuration
+MAX_UPLOAD_MB=20
 
-# Storage Tokens (per colleague)
-CLAIRE_READ_WRITE_TOKEN=<your_blob_token>
-TOM_READ_WRITE_TOKEN=<your_blob_token>
-REMCO_READ_WRITE_TOKEN=<your_blob_token>
-
-# Optional: Assistant IDs and Vector Store IDs (configured on platform.openai.com)
-# Will default to production values if not specified
+# Authentication
+APP_PASSWORD=your-secure-password
 ```
 
-## Assistant Configuration
+### Production (Vercel)
 
-Each assistant is configured on [platform.openai.com/assistants](https://platform.openai.com/assistants) with:
+Set these environment variables in **Vercel Project Settings → Environment Variables**:
 
-- **System Instructions**: Role-specific behavioral guidelines
-- **Vector Store**: Access to relevant documents (file_search)
-- **Tools**: Web search, document search, custom functions
-- **Model**: GPT-4o-mini (cost optimized)
+- `MISTRAL_API_KEY`: Your Mistral API key
+- `MISTRAL_AGENT_ID_DENNIS`: Dennis agent ID from Mistral Studio
+- `MISTRAL_WORKSPACE_ID_DENNIS`: Dennis workspace ID from Mistral Studio
+- `MISTRAL_AGENT_ID_NIELS`: Niels agent ID from Mistral Studio
+- `MISTRAL_WORKSPACE_ID_NIELS`: Niels workspace ID from Mistral Studio
+- `MAX_UPLOAD_MB`: Maximum file upload size (default: 20)
+- `APP_PASSWORD`: Secure password for app access
 
-### Current Assistants
+**⚠️ IMPORTANT**: The `APP_PASSWORD` variable must ONLY be set in Vercel environment variables. **Never commit it to the repository.**
 
-| Assistant | ID | Purpose | Web Search |
-|-----------|----|---------|----|
-| Claire | asst_RV73BLM5HB6ScbYIujNVJH6f | HR Advisor | ❌ |
-| Tom | asst_FYWjsbBhjC3WL4U2mgr5ySaA | Learning & Development | ❌ |
-| Remco | asst_UaYD6dZC7qxCCjZUWiWHtply | Tender Specialist | ❌ |
-| Roos | asst_qUtgsCtBehfHln5wBIiZHPap | Marketing & Communications | ✅ |
-| HN-AB | asst_AgxNxGDvrPMTr72QRhImZ4fp | General Knowledge | ❌ |
+## Colleague Configuration
+
+Each colleague is configured as a Mistral AI Agent with:
+
+- **Agent ID**: Unique identifier from Mistral Studio
+- **Workspace ID**: Associated Mistral workspace for file storage
+- **Role**: Specialized expertise
+
+### Current Colleagues
+
+| Colleague | Role | Status |
+|-----------|------|--------|
+| Dennis | Merk specialist | ✅ Active |
+| Niels | Design Expert | ✅ Active |
 
 ## Getting Started
 
-First, run the development server:
+### Local Development
 
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/PeterPeterinc/Baind-INC-webapp.git
+cd Baind-INC-webapp
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Create `.env.local` with your configuration:
+```bash
+cp .env.example .env.local
+# Then edit .env.local with your actual credentials
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Run the development server:
+```bash
+npm run dev
+```
+
+5. Open [http://localhost:3000](http://localhost:3000) with your browser
+
+### Authentication
+
+- The app is password-protected
+- Login with the password set in `APP_PASSWORD` environment variable
+- Sessions are stored in secure HTTP-only cookies
+- Session duration: 7 days
+
+## Deployment
+
+### Deploy to Vercel
+
+1. Push your code to GitHub
+2. Connect your repository to Vercel at [vercel.com](https://vercel.com)
+3. Set all required environment variables in Vercel Project Settings
+4. Vercel will automatically deploy on every push to main branch
+
+**Important**: Ensure `APP_PASSWORD` is set in Vercel environment variables before deploying.
+
+## Security
+
+- Passwords are never stored in plain text
+- Session tokens are SHA-256 hashed
+- All API routes validate origin and rate limit
+- Environment variables are never committed to repository
+- Use `.env.local` for local development (it's in `.gitignore`)
+
+## API Routes
+
+- `POST /api/auth/login` - Authenticate with password
+- `POST /api/auth/logout` - Logout and clear session
+- `POST /api/chat` - Send message to colleague's Mistral agent
+- `GET /api/storage` - List uploaded files
+- `POST /api/storage/upload` - Upload file to Mistral
+- `DELETE /api/storage/[id]` - Delete file from Mistral
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Mistral AI Documentation](https://docs.mistral.ai)
+- [Vercel Documentation](https://vercel.com/docs)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
