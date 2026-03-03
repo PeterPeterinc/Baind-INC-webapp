@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforceRateLimit, isSupportedColleagueId, validateSameOrigin } from "@/lib/apiSecurity";
 import { getAgentIdForColleague, getApiBaseUrl, getMistralApiKey } from "@/lib/mistralStorage";
 
 interface ChatMessage {
@@ -36,6 +37,22 @@ function extractAssistantText(content: unknown): string {
 
 export async function POST(request: Request) {
   try {
+    const originError = validateSameOrigin(request);
+    if (originError) {
+      return NextResponse.json({ error: originError }, { status: 403 });
+    }
+
+    const rateLimit = enforceRateLimit(request, "api-chat", 30, 60_000);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Te veel verzoeken, probeer het zo opnieuw." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        },
+      );
+    }
+
     const body = (await request.json()) as ChatRequestBody;
     const { colleagueId, message, conversationHistory = [] } = body;
 
@@ -44,6 +61,9 @@ export async function POST(request: Request) {
         { error: "colleagueId en message zijn verplicht." },
         { status: 400 },
       );
+    }
+    if (!isSupportedColleagueId(colleagueId)) {
+      return NextResponse.json({ error: "Ongeldige collega." }, { status: 400 });
     }
 
     const agentId = getAgentIdForColleague(colleagueId);
@@ -73,10 +93,10 @@ export async function POST(request: Request) {
 
     const rawBody = await response.text();
     if (!response.ok) {
+      console.error("Mistral chat error", response.status, rawBody.slice(0, 300));
       return NextResponse.json(
         {
-          error: `Mistral chat mislukt (${response.status}).`,
-          details: rawBody.slice(0, 600),
+          error: "Mistral chat mislukt.",
         },
         { status: response.status },
       );
@@ -96,10 +116,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ answer });
   } catch (error) {
+    console.error("Chat route failure", error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Onbekende fout tijdens chat.",
+        error: "Onbekende fout tijdens chat.",
       },
       { status: 500 },
     );

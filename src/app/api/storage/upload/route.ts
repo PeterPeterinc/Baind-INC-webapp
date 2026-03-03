@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforceRateLimit, isSupportedColleagueId, validateSameOrigin } from "@/lib/apiSecurity";
 import {
   getApiBaseUrl,
   getMaxUploadBytes,
@@ -6,9 +7,31 @@ import {
 } from "@/lib/mistralStorage";
 
 const FILE_PREFIX_SEP = "__";
+const ALLOWED_MIME_TYPES = new Set([
+  "application/pdf",
+  "text/plain",
+  "text/markdown",
+  "application/json",
+]);
 
 export async function POST(request: Request) {
   try {
+    const originError = validateSameOrigin(request);
+    if (originError) {
+      return NextResponse.json({ error: originError }, { status: 403 });
+    }
+
+    const rateLimit = enforceRateLimit(request, "api-storage-upload", 10, 60_000);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Te veel uploadverzoeken, probeer het zo opnieuw." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        },
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get("file");
     const colleagueId = formData.get("colleagueId");
@@ -26,6 +49,9 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+    if (!isSupportedColleagueId(colleagueId)) {
+      return NextResponse.json({ error: "Ongeldige collega." }, { status: 400 });
+    }
 
     const maxBytes = getMaxUploadBytes();
     if (file.size > maxBytes) {
@@ -33,6 +59,12 @@ export async function POST(request: Request) {
         {
           error: `Bestand is te groot. Maximum is ${Math.round(maxBytes / (1024 * 1024))}MB.`,
         },
+        { status: 400 },
+      );
+    }
+    if (!ALLOWED_MIME_TYPES.has(file.type)) {
+      return NextResponse.json(
+        { error: "Bestandstype niet toegestaan." },
         { status: 400 },
       );
     }
@@ -51,10 +83,10 @@ export async function POST(request: Request) {
 
     const rawBody = await response.text();
     if (!response.ok) {
+      console.error("Mistral upload error", response.status, rawBody.slice(0, 300));
       return NextResponse.json(
         {
-          error: `Upload naar Mistral mislukt (${response.status}).`,
-          details: rawBody.slice(0, 600),
+          error: "Upload naar Mistral mislukt.",
         },
         { status: response.status },
       );
@@ -84,12 +116,10 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
+    console.error("Storage upload route failure", error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Onbekende fout tijdens upload.",
+        error: "Onbekende fout tijdens upload.",
       },
       { status: 500 },
     );

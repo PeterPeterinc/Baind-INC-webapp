@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { enforceRateLimit, isSupportedColleagueId, validateSameOrigin } from "@/lib/apiSecurity";
 import { getApiBaseUrl, getMistralApiKey } from "@/lib/mistralStorage";
 
 interface MistralFile {
@@ -12,6 +13,22 @@ const FILE_PREFIX_SEP = "__";
 
 export async function GET(request: Request) {
   try {
+    const originError = validateSameOrigin(request);
+    if (originError) {
+      return NextResponse.json({ error: originError }, { status: 403 });
+    }
+
+    const rateLimit = enforceRateLimit(request, "api-storage-list", 60, 60_000);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Te veel verzoeken, probeer het zo opnieuw." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        },
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const colleagueId = searchParams.get("colleague");
 
@@ -20,6 +37,9 @@ export async function GET(request: Request) {
         { error: "colleague query parameter is verplicht." },
         { status: 400 },
       );
+    }
+    if (!isSupportedColleagueId(colleagueId)) {
+      return NextResponse.json({ error: "Ongeldige collega." }, { status: 400 });
     }
 
     const response = await fetch(`${getApiBaseUrl()}/v1/files?page=0&page_size=100`, {
@@ -31,10 +51,10 @@ export async function GET(request: Request) {
 
     const rawBody = await response.text();
     if (!response.ok) {
+      console.error("Mistral list error", response.status, rawBody.slice(0, 300));
       return NextResponse.json(
         {
-          error: `Mistral lijst ophalen mislukt (${response.status}).`,
-          details: rawBody.slice(0, 600),
+          error: "Mistral lijst ophalen mislukt.",
         },
         { status: response.status },
       );
@@ -60,12 +80,10 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ items });
   } catch (error) {
+    console.error("Storage list route failure", error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Onbekende fout bij ophalen van bestanden.",
+        error: "Onbekende fout bij ophalen van bestanden.",
       },
       { status: 500 },
     );
