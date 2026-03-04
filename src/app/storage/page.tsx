@@ -27,38 +27,17 @@ interface StorageItem {
 
 const colleagues = [
   {
-    id: "hnab",
-    name: "HN-AB",
-    title: "Algemeen",
-    avatar: "/inc-logo.png",
+    id: "dennis",
+    name: "Dennis",
+    title: "Merk specialist",
+    avatar: "/dennis.png",
     enabled: true,
   },
   {
-    id: "claire",
-    name: "Claire",
-    title: "Re-integratie & jobcoaching",
-    avatar: "/claire.jpg",
-    enabled: true,
-  },
-  {
-    id: "tom",
-    name: "Tom",
-    title: "Online & SEO",
-    avatar: "/tom.jpg",
-    enabled: true,
-  },
-  {
-    id: "remco",
-    name: "Remco",
-    title: "Tender & sales",
-    avatar: "/remco.jpg",
-    enabled: true,
-  },
-  {
-    id: "roos",
-    name: "Roos",
-    title: "Marketing & communicatie",
-    avatar: "/roos.jpg",
+    id: "niels",
+    name: "Niels",
+    title: "Design Expert",
+    avatar: "/niels.png",
     enabled: true,
   },
 ];
@@ -68,7 +47,7 @@ const MAX_SIZE_TEXT = "Maximaal 25MB per bestand. PDF, TXT en Markdown toegestaa
 export default function StoragePage() {
   const defaultColleague =
     colleagues.find(
-      (colleague) => colleague.id === "hnab" && colleague.enabled,
+      (colleague) => colleague.id === "dennis" && colleague.enabled,
     )?.id ??
     colleagues.find((colleague) => colleague.enabled)?.id ??
     colleagues[0].id;
@@ -122,7 +101,7 @@ export default function StoragePage() {
   function selectColleague(colleagueId: string, enabled: boolean) {
     if (!enabled) {
       setStatus(
-        "Uploads voor deze collega zijn binnenkort beschikbaar. Kies voorlopig Remco.",
+        "Uploads voor deze collega zijn binnenkort beschikbaar.",
       );
       return;
     }
@@ -266,11 +245,7 @@ export default function StoragePage() {
                       alt={colleague.name}
                       width={56}
                       height={56}
-                      className={`h-14 w-14 rounded-full ${
-                        colleague.id === "hnab"
-                          ? "object-contain bg-white p-2"
-                          : "object-cover"
-                      }`}
+                      className="h-14 w-14 rounded-full object-cover"
                     />
                     <div>
                       <p className="font-semibold text-[#1f1a12]">
